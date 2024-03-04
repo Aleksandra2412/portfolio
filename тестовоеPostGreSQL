@@ -1,0 +1,36 @@
+
+
+В какой СУБД мы будем работать — не сказано. По косвенным признакам предполагаем, что это PostgreSQL.
+
+Задача 1
+Необходимо получить список сотрудников в формате: «Иванова — Наталья – Юрьевна». ФИО должно быть прописано в одном столбике, разделение —.
+Вывести: новое поле, назовем его fio, birth_dt.
+
+select concat(last_nm, '-', first_nm, '-', middle_nm) as 'fio', birth_dt 
+from Employees e 
+
+Задача 2
+Вывести %% дозвона для каждого дня. Период с 01.10.2020 по текущий день (%% дозвона – это доля принятых звонков (dozv_flg=1) от всех поступивших звонков (dozv_flg = 1 or dozv_flg = 0)).
+Вывести: date, sla (%% дозвона)
+
+with cte as
+	(select *,  count(call_id) as dozv
+	from Calls
+	where dozv_flg = 1), 
+cte2 as(
+	select *, count(call_id) as calls 
+	from Calls)
+select (cte.dozv/cte2.calls)* 100, date_part(day, cte2.end_dttm) as date
+from cte
+left join cte2 on cte2.call_id = cte.call_id
+group by date
+
+Задача 3
+Дана таблица clinets:
+id клиента
+calendar_at - дата входа в мобильное приложение
+Нужно написать запрос для расчета MAU.
+
+select count(distinct(id_client), date_part (month, calendar_at) as months
+from clinets
+group by months
